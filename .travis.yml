@@ -1,0 +1,32 @@
+language: julia
+os:
+- linux
+julia:
+- 1.0
+notifications:
+  email: false
+git:
+  depth: 99999999
+cache:
+  timeout: 1000
+  directories:
+  - downloads
+env:
+  global:
+  - BINARYBUILDER_DOWNLOADS_CACHE=downloads
+  - BINARYBUILDER_AUTOMATIC_APPLE=true
+sudo: required
+before_script:
+- julia -e 'using Pkg; pkg"add BinaryProvider"; pkg"add BinaryBuilder#master"; Pkg.build()'
+script:
+- julia  --color=yes build_tarballs.jl
+deploy:
+  provider: releases
+  api_key:
+    secure: PafQg1mwfSgpJtSgNHzB8ddtiTXOTWBMwSYkN+GW09WERGvJr179Et56wMKIv2EiSfVG/vHlhqWvggQ2/L0I8j1AeesGS34T0T3ZtC85W6GQN2JsvlUIaGorLBOLN3D03xAi12TYSuUt4gGsrhfBRn4wy1EYwKFzcceqVmq3CYyyP7Qeb5NR0F7+u8TX0v7PvUAJ24vNzwGrCOyJ3gbCQJIs+btelmXGRJcv2TYW+D9FIc7owf8DJKeNRXspjNYB7A1ctcMgUstjVe2XMu97lhhru2ajNusE2srwbInGXol6gfs9X8rZajVc9oiY/g8WKbBN/iz7tqs3YKZ1w3SCHF4QCvEUtCKwyGBR+Uv5mrvSX1+6ln/+IOsnVjm6GUNQ258U753oOMTQuOODZKYUMj056yENfIbLJ3JNuRDDTQevV9B572GsyRUMu+VjZupqXtfSD/WNQ/yPCJA/gDiXs7+Vl0qJn9O7N2qB6UMoOKQQhqCgsWQHIjcoKGa86oIyHPdJSt+PYuQrOQ3tQVqt7smJUG7pJZTg0xcIskxD4IzSINK7dAvirx1nkX43Az6URJ9JyC+9bglQAnijVWdRQzaVirP4WhepEYsMtv7CEOoM+rJZHEsLZ8lWUAAEqgVe0HzOylY0hKCUh7Q43j9gm1jNYJqj0/oiFPkgoqWr2Mk=
+  file_glob: true
+  file: products/*
+  skip_cleanup: true
+  on:
+    repo: benlorenz/perlBuilder
+    tags: true
