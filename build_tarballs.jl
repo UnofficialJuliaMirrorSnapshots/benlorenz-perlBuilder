@@ -3,16 +3,16 @@
 using BinaryBuilder
 
 name = "perl"
-version = v"5.28.2"
+version = v"5.30.0"
 
 # Collection of sources required to build perl
 # with a few extra modules for polymake
 sources = [
     "https://www.cpan.org/src/5.0/perl-$version.tar.gz" =>
-    "aa95456dddb3eb1cc5475fed4e08f91876bea71fb636fba6399054dfbabed6c7",
+    "851213c754d98ccff042caa40ba7a796b2cee88c5325f121be5cbb61bbf975f2",
 
-    "https://cpan.metacpan.org/authors/id/I/IS/ISHIGAKI/JSON-2.97001.tar.gz" =>
-    "e277d9385633574923f48c297e1b8acad3170c69fa590e31fa466040fc6f8f5a",
+    "https://cpan.metacpan.org/authors/id/I/IS/ISHIGAKI/JSON-4.01.tar.gz" =>
+    "631593a939d4510e6ed76402556f38a34b20007237828670282e975712e0b1ed",
 
     "https://cpan.metacpan.org/authors/id/J/JO/JOSEPHW/XML-Writer-0.625.tar.gz" =>
     "e080522c6ce050397af482665f3965a93c5d16f5e81d93f6e2fe98084ed15fbe",
@@ -23,14 +23,14 @@ sources = [
     "https://cpan.metacpan.org/authors/id/S/SH/SHLOMIF/XML-LibXSLT-1.96.tar.gz" =>
     "2a5e374edaa2e9f9d26b432265bfea9b4bb7a94c9fbfef9047b298fce844d473",
 
-    "https://cpan.metacpan.org/authors/id/J/JS/JSTOWE/TermReadKey-2.37.tar.gz" =>
-    "4a9383cf2e0e0194668fe2bd546e894ffad41d556b41d2f2f577c8db682db241",
+    "https://cpan.metacpan.org/authors/id/J/JS/JSTOWE/TermReadKey-2.38.tar.gz" =>
+    "5a645878dc570ac33661581fbb090ff24ebce17d43ea53fd22e105a856a47290",
 
-    "https://cpan.metacpan.org/authors/id/H/HA/HAYASHI/Term-ReadLine-Gnu-1.35.tar.gz" =>
-    "575d32d4ab67cd656f314e8d0ee3d45d2491078f3b2421e520c4273e92eb9125",
+    "https://cpan.metacpan.org/authors/id/H/HA/HAYASHI/Term-ReadLine-Gnu-1.36.tar.gz" =>
+    "9a08f7a4013c9b865541c10dbba1210779eb9128b961250b746d26702bab6925",
 
-    "https://cpan.metacpan.org/authors/id/G/GR/GRANTM/XML-SAX-1.00.tar.gz" =>
-    "45ea6564ef8692155d57b2de0862b6442d3c7e29f4a9bc9ede5d7ecdc74c2ae3",
+    "https://cpan.metacpan.org/authors/id/G/GR/GRANTM/XML-SAX-1.02.tar.gz" =>
+    "4506c387043aa6a77b455f00f57409f3720aa7e553495ab2535263b4ed1ea12a",
 
     "https://cpan.metacpan.org/authors/id/P/PE/PERIGRIN/XML-NamespaceSupport-1.12.tar.gz" =>
     "47e995859f8dd0413aa3f22d350c4a62da652e854267aa0586ae544ae2bae5ef",
@@ -45,15 +45,15 @@ sources = [
 
 # Bash recipe for building across all platforms
 # currently missing:
-#   Term-ReadLine-Gnu-1.35
+#   Term-ReadLine-Gnu-1.36
 #   - not needed for callable
 script = raw"""
-cd $WORKSPACE/srcdir/perl-5.28.2/
+cd $WORKSPACE/srcdir/perl-5.30.0/
 ./Configure -des -Dcc=gcc -Dprefix=$prefix -Duseshrplib -Darchname=$target -Dsysroot=/opt/$target/$target/sys-root
 make -j${nproc} install
 
-for perlmoddir in JSON-2.97001 XML-NamespaceSupport-1.12 XML-SAX-Base-1.09 \
-                  XML-SAX-1.00 XML-Writer-0.625 XML-LibXML-2.0132 TermReadKey-2.37 \
+for perlmoddir in JSON-4.01 XML-NamespaceSupport-1.12 XML-SAX-Base-1.09 \
+                  XML-SAX-1.02 XML-Writer-0.625 XML-LibXML-2.0132 TermReadKey-2.38 \
                   SVG-2.84;
 do
    cd $WORKSPACE/srcdir/$perlmoddir;
@@ -93,7 +93,7 @@ products(prefix) = [
 # Dependencies that must be installed before this package can be built
 dependencies = [
     "https://github.com/bicycle1885/ZlibBuilder/releases/download/v1.0.4/build_Zlib.v1.2.11.jl",
-    "https://github.com/bicycle1885/XML2Builder/releases/download/v1.0.2/build_XML2Builder.v2.9.9.jl",
+    "https://github.com/JuliaPackaging/Yggdrasil/releases/download/XML2-v2.9.9+0/build_XML2.v2.9.9.jl",
     "https://github.com/benlorenz/XSLTBuilder/releases/download/v1.1.33/build_XSLTBuilder.v1.1.33.jl"
 ]
 
