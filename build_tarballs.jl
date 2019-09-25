@@ -41,36 +41,58 @@ sources = [
     "https://cpan.metacpan.org/authors/id/M/MA/MANWAR/SVG-2.84.tar.gz" =>
     "ec3d6ddde7a46fa507eaa616b94d217296fdc0d8fbf88741367a9821206f28af",
 
+    "./bundled"
 ]
 
-# Bash recipe for building across all platforms
-# currently missing:
-#   Term-ReadLine-Gnu-1.36
-#   - not needed for callable
+# Bash recipe for building
 script = raw"""
-cd $WORKSPACE/srcdir/perl-5.30.0/
-./Configure -des -Dcc=gcc -Dprefix=$prefix -Duseshrplib -Darchname=$target -Dsysroot=/opt/$target/$target/sys-root
-make -j${nproc} install
-
-for perlmoddir in JSON-4.01 XML-NamespaceSupport-1.12 XML-SAX-Base-1.09 \
-                  XML-SAX-1.02 XML-Writer-0.625 XML-LibXML-2.0132 TermReadKey-2.38 \
-                  SVG-2.84;
+perldir=`ls -1d perl-*`
+cd $WORKSPACE/srcdir/
+for dir in *;
 do
-   cd $WORKSPACE/srcdir/$perlmoddir;
-   ${prefix}/bin/perl Makefile.PL;
-   make install;
+   [[ "$dir" == "perl-"* ]] && continue;
+   [[ "$dir" == "patches" ]] && continue;
+   sed -i '1s/^/$ENV{PERL_CORE}=0;/' $dir/Makefile.PL
+   mv $dir $perldir/cpan/${dir%-*};
 done
 
-cd $WORKSPACE/srcdir/XML-LibXSLT-1.96
-${prefix}/bin/perl Makefile.PL LIBS="-L${prefix}/lib -lxslt -lexslt -lxml2 -lm -lz" INC="-I${prefix}/include -I${prefix}/include/libxml2"
+cd $perldir/
+if [[ $target != x86_64-linux* ]] && [[ $target != i686-linux* ]]; then
+   # build host miniperl
+   src=`pwd`
+   mkdir $src/host
+   cd $src/host
+   $src/Configure -des -Dusedevel -Dmksymlinks -Dosname=linux -Dcc=$CC_FOR_BUILD -Dld=$LD_FOR_BUILD -Dlibs=-lm
+   make -j${nproc} miniperl
+   make -j${nproc} generate_uudmap
+   cp -p miniperl $prefix/bin/miniperl-for-build
+   cd ..
+   cp ../patches/config-$target.sh config.sh
+   atomic_patch -p1 ../patches/cross-nolibchecks.patch
+   ./Configure -K -S
+else
+   atomic_patch -p1 ../patches/cross-nolibchecks.patch
+   ./Configure -des -Dcc="$CC" -Dprefix=$prefix -Duseshrplib -Dsysroot=/opt/$target/$target/sys-root -Dccflags="-I${prefix}/include -I${prefix}/include/libxml2" -Dldflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib" -Dlddlflags="-shared -L${prefix}/lib -Wl,-rpath,${prefix}/lib"
+fi
+
+make -j${nproc} depend
+make -j${nproc}
+
 make install
 
+pushd $prefix/lib
+ln -s perl5/*/*/CORE/libperl.${dlext} libperl.${dlext}
+popd
+
+if [[ $target == *linux* ]]; then
 patchelf --set-rpath $(patchelf --print-rpath ${prefix}/bin/perl | sed -e "s#${prefix}#\$ORIGIN/..#g") ${prefix}/bin/perl
-for lib in ${prefix}/lib/perl5/site_perl/*/*/auto/XML/LibXML/LibXML.so \
-           ${prefix}/lib/perl5/site_perl/*/*/auto/XML/LibXSLT/LibXSLT.so;
+for lib in ${prefix}/lib/perl5/*/*/auto/XML/LibXML/LibXML.${dlext} \
+           ${prefix}/lib/perl5/*/*/auto/XML/LibXSLT/LibXSLT.${dlext};
 do
-   patchelf --set-rpath $(patchelf --print-rpath ${lib} | sed -e "s#${prefix}/lib#\$ORIGIN/../../../../../../..#g") ${lib};
+   patchelf --set-rpath $(patchelf --print-rpath ${lib} | sed -e "s#${prefix}/lib#\$ORIGIN/../../../../../..#g") ${lib};
 done
+fi
+
 
 """
 
@@ -79,22 +101,23 @@ done
 platforms = [
     Linux(:x86_64, libc=:glibc)
     Linux(:i686, libc=:glibc)
+    MacOS(:x86_64)
 ]
-#TODO: platforms = supported_platforms()
 
 
 # The products that we will ensure are always built
 products(prefix) = [
     ExecutableProduct(prefix, "perl", :perl)
+    LibraryProduct(prefix, "libperl", :libperl)
 ]
-# TODO: add with correct path?
-#    LibraryProduct(prefix, "libperl", :libperl),
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
     "https://github.com/bicycle1885/ZlibBuilder/releases/download/v1.0.4/build_Zlib.v1.2.11.jl",
     "https://github.com/JuliaPackaging/Yggdrasil/releases/download/XML2-v2.9.9+0/build_XML2.v2.9.9.jl",
-    "https://github.com/benlorenz/XSLTBuilder/releases/download/v1.1.33/build_XSLTBuilder.v1.1.33.jl"
+    "https://github.com/benlorenz/XSLTBuilder/releases/download/v1.1.33/build_XSLTBuilder.v1.1.33.jl",
+    "https://github.com/benlorenz/readlineBuilder/releases/download/v8.0/build_readline.v8.0.0.jl",
+    "https://github.com/benlorenz/ncursesBuilder/releases/download/v6.1/build_ncurses.v6.1.0.jl"
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well.
